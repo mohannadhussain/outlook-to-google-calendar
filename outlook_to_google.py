@@ -25,13 +25,14 @@ def authenticate_outlook():
     token_backend = FileSystemTokenBackend(
         token_path=config.outlook_token_path, token_filename=config.outlook_token_filename
     )
-    account = Account(credentials, token_backend=token_backend)
+    account = Account(credentials, token_backend=token_backend, timeout=config.outlook_timeout)
     if not account.is_authenticated:
         # not authenticated, throw error
         account.authenticate(requested_scopes=config.outlook_scopes)
 
-    connection = Connection(credentials, token_backend=token_backend, scopes=config.outlook_scopes)
-    connection.refresh_token()
+    #connection = Connection(credentials, token_backend=token_backend, scopes=config.outlook_scopes)
+    #connection.refresh_token()
+    account.con.refresh_token()
 
     print("Authenticated Outlook.")
     return account
