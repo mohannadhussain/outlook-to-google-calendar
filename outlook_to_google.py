@@ -13,6 +13,10 @@ from O365 import FileSystemTokenBackend
 
 import config
 
+import socket
+import urllib3.util.connection
+urllib3.util.connection.allowed_gai_family = lambda: socket.AF_INET
+
 
 def authenticate_outlook():
     # authenticate microsoft graph api credentials
@@ -24,7 +28,7 @@ def authenticate_outlook():
     account = Account(credentials, token_backend=token_backend)
     if not account.is_authenticated:
         # not authenticated, throw error
-        account.authenticate(scopes=config.outlook_scopes)
+        account.authenticate(requested_scopes=config.outlook_scopes)
 
     connection = Connection(credentials, token_backend=token_backend, scopes=config.outlook_scopes)
     connection.refresh_token()
@@ -54,12 +58,17 @@ def get_outlook_events(cal):
     # get all events from an outlook calendar
     start_time = time.time()
 
-    start = dt.datetime.today() - dt.timedelta(days=config.previous_days)
-    end = dt.datetime.today() + dt.timedelta(days=config.future_days)
-    query = (
-        cal.new_query("start").greater_equal(start).chain("and").on_attribute("end").less_equal(end)
+    # start = dt.datetime.today() - dt.timedelta(days=config.previous_days)
+    # end = dt.datetime.today() + dt.timedelta(days=config.future_days)
+    # query = (
+    #     cal.new_query("start").greater_equal(start).chain("and").on_attribute("end").less_equal(end)
+    # )
+    # events = cal.get_events(query=query, limit=None, include_recurring=True)
+    start = dt.datetime.now().astimezone() - dt.timedelta(days=config.previous_days)
+    end = dt.datetime.now().astimezone() + dt.timedelta(days=config.future_days)
+    events = cal.get_events(
+        limit=None, include_recurring=True, start_recurring=start, end_recurring=end
     )
-    events = cal.get_events(query=query, limit=None, include_recurring=True)
     events = list(events)
 
     elapsed_time = time.time() - start_time
